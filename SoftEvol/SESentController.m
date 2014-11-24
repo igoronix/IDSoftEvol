@@ -59,22 +59,24 @@
     {
         SEPacket *packet = [notification.userInfo valueForKey:kSESocketPacketKey];
         [self.operations addObject:packet];
-        [self.tableView reloadData];
-        
-        NSIndexPath* ipath = [NSIndexPath indexPathForRow: [self.operations count]-1 inSection:0];
+        NSIndexPath* ipath = [NSIndexPath indexPathForRow: [self.operations indexOfObject:packet] inSection:0];
+        [self.tableView insertRowsAtIndexPaths:@[ipath] withRowAnimation:UITableViewRowAnimationAutomatic];
         [self.tableView scrollToRowAtIndexPath:ipath atScrollPosition: UITableViewScrollPositionTop animated:YES];
     }
 }
 
 - (void)socketSentMessageNotification:(NSNotification *)notification
 {
-    if (notification.userInfo != nil)
-    {
-        SEPacket *packet = [notification.userInfo valueForKey:kSESocketPacketKey];
-        packet.tag = 1;
-        NSUInteger i = [self.operations indexOfObject:packet];
-        [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (notification.userInfo != nil)
+        {
+            SEPacket *packet = [notification.userInfo valueForKey:kSESocketPacketKey];
+            packet.tag = 1;
+            
+            NSUInteger i = [self.operations indexOfObject:packet];
+            [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
+        }
+    });
 }
 
 - (void)socketReceiveMessageNotification:(NSNotification *)notification
@@ -83,22 +85,23 @@
     {
         SEPacket *newPacket = [notification.userInfo valueForKey:kSESocketPacketKey];
         SEPacket *oldPacket = [self findPacketLike:newPacket];
+        
         NSUInteger i = [self.operations indexOfObject:oldPacket];
         if (oldPacket)
         {
             oldPacket.tag = 2;
-
-            double delayInSeconds = .3;
-            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-                NSUInteger i = [self.operations indexOfObject:oldPacket];
-                [self.operations removeObject:oldPacket];
-                [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
-            });
+            [self performSelector:@selector(deletePacket:) withObject:oldPacket afterDelay:0.5];
         }
-
+        
         [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
     }
+}
+
+- (void)deletePacket:(id)packet
+{
+    NSUInteger i = [self.operations indexOfObject:packet];
+    [self.operations removeObject:packet];
+    [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
 }
 
 - (SEPacket *)findPacketLike:(SEPacket *)newPack
@@ -150,7 +153,6 @@
         default:
             break;
     }
-    
     cell.backgroundColor = color;
     [color release];
     

@@ -87,29 +87,31 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 
 - (void)addMessage:(NSString *)message withValue:(BOOL)value date:(NSDate *)date inFormat:(SEPacketFormat)format;
 {
+//    for (NSUInteger i = 0; i < 20; i++)
+//    {
+//        date = [NSDate dateWithTimeInterval:i sinceDate:date];
+//        __block SEPacket *packet = [[SEPacket alloc] initWith:[NSString stringWithFormat:@"%i", i] withValue:value date:date];//message withValue:value date:date];
     __block SEPacket *packet = [[SEPacket alloc] initWith:message withValue:value date:date];
     packet.format = format;
-    __block id archiveData = [self messageFromPacket:packet inFormat:format];
-    
-    NSBlockOperation *operation = [NSBlockOperation new];
-    [operation addExecutionBlock:^(void)
-     {
-         if ([operation isCancelled]) { NSLog(@"Canceled ========= \n\n\n"); return;}
-         
-         [self.socket send:archiveData];
-         
-         if ([operation isCancelled]) { NSLog(@"Canceled ========= \n\n\n"); return; }
-         
-         [[NSOperationQueue mainQueue] addOperationWithBlock:^(void)
-          {
-              [[NSNotificationCenter defaultCenter] postNotificationName:kSESocketSentMessageNotification object:self userInfo:
-               @{kSESocketMessageKey:archiveData, kSESocketPacketKey:packet}];
-          }];
-     }];
-
-    [self.packetsQueue addOperation:operation];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kSEAddOperationToQueueNotification object:self userInfo:
-     @{kSESocketMessageKey:archiveData, kSESocketPacketKey:packet}];
+        __block id archiveData = [self messageFromPacket:packet inFormat:format];
+        
+        NSBlockOperation *operation = [NSBlockOperation new];
+        [operation addExecutionBlock:^(void)
+         {
+             if ([operation isCancelled]) { NSLog(@"Canceled ========= \n\n\n"); return;}
+             
+             [self.socket send:archiveData];
+             
+             [[NSNotificationCenter defaultCenter] postNotificationName:kSESocketSentMessageNotification object:self userInfo:
+              @{kSESocketMessageKey:archiveData, kSESocketPacketKey:packet}];
+             
+             if ([operation isCancelled]) { NSLog(@"Canceled ========= \n\n\n"); return; }
+         }];
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:kSEAddOperationToQueueNotification object:self userInfo:
+         @{kSESocketMessageKey:archiveData, kSESocketPacketKey:packet}];
+        [self.packetsQueue addOperation:operation];
+//    }
 }
 
 - (id)messageFromPacket:(SEPacket *)packet inFormat:(SEPacketFormat)format

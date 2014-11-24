@@ -88,10 +88,12 @@
 
 - (void)socketSentMessageNotification:(NSNotification *)notification
 {
-    id message = [notification.userInfo valueForKey:kSESocketMessageKey];
-    NSString *logString = [NSString stringWithFormat:@"[%@]  SENT:\n%@\n", [[SEDirector sharedInstance].dateFormatter stringFromDate:[NSDate date]], message];
-    [self.tvLog insertText:logString];
-    [self.tvLog scrollToBottom];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        id message = [notification.userInfo valueForKey:kSESocketMessageKey];
+        NSString *logString = [NSString stringWithFormat:@"[%@]  SENT:\n%@\n", [[SEDirector sharedInstance].dateFormatter stringFromDate:[NSDate date]], message];
+        [self.tvLog insertText:logString];
+        [self.tvLog scrollToBottom];
+    });
 }
 
 - (void)socketReceivedMessageNotification:(NSNotification *)notification
