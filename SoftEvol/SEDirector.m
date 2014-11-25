@@ -74,7 +74,11 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 {
     [self removeObserver:self forKeyPath:kSESocketStatePath];
     
+    [_nonReceivedPackets release];
+    [_packetsQueue release];
+    [_dateFormatter release];
     [_socket release];
+    
     [super dealloc];
 }
 
@@ -277,7 +281,7 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 - (id)messageFromPacket:(SEPacket *)packet inFormat:(SEPacketFormat)format
 {
     id archiveData;
-    if (format == 1 || format == 3)
+    if (format == SEPacketFormat_XML || format == SEPacketFormat_Binary)
     {
         archiveData = [NSMutableData data];
         NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initForWritingWithMutableData:archiveData];
