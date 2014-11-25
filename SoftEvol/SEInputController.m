@@ -46,10 +46,16 @@
     
     [self.tvLog setTextContainerInset:UIEdgeInsetsMake(16, 16, 0, 0)];
     self.tvLog.text = nil;
-    
     self.tvLog.layer.borderWidth = 2.0;
     self.tvLog.layer.borderColor = [UIColor darkGrayColor].CGColor;
     self.tvLog.layer.cornerRadius = 8.0;
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    [self updateStatus];
 }
 
 #pragma mark - Actions
@@ -72,17 +78,7 @@
 {
     if (notification.userInfo != nil)
     {
-        NSUInteger status = [[notification.userInfo valueForKey:kSESocketStatusKey] integerValue];
-        
-        self.lbStatus.text = socketStatusString(status);
-        self.lbStatus.textColor = (status == 1)?[UIColor greenColor]:[UIColor redColor];
-        
-        NSString *logString = [NSString stringWithFormat:@"[%@]  STATUS: %@\n", [[SEDirector sharedInstance].dateFormatter stringFromDate:[NSDate date]], socketStatusString(status)];
-        [self.tvLog insertText:logString];
-        [self.tvLog scrollToBottom];
-        
-        NSString *str = (status == 1) ? @"Send":@"reConnect";
-        [self.btSend setTitle:str forState:UIControlStateNormal];
+        [self updateStatus];
     }
 }
 
@@ -102,6 +98,21 @@
     NSString *logString = [NSString stringWithFormat:@"[%@]  RECEIVED:\n%@\n", [[SEDirector sharedInstance].dateFormatter stringFromDate:[NSDate date]], message];
     [self.tvLog insertText:logString];
     [self.tvLog scrollToBottom];
+}
+
+- (void)updateStatus
+{
+    NSUInteger status = [SEDirector sharedInstance].socketStatus;
+    
+    self.lbStatus.text = socketStatusString(status);
+    self.lbStatus.textColor = (status == 1)?[UIColor greenColor]:[UIColor redColor];
+    
+    NSString *logString = [NSString stringWithFormat:@"[%@]  STATUS: %@\n", [[SEDirector sharedInstance].dateFormatter stringFromDate:[NSDate date]], socketStatusString(status)];
+    [self.tvLog insertText:logString];
+    [self.tvLog scrollToBottom];
+    
+    NSString *str = (status == 1) ? @"Send":@"reConnect";
+    [self.btSend setTitle:str forState:UIControlStateNormal];
 }
 
 @end

@@ -8,6 +8,9 @@
 
 #import "SEDirector.h"
 #import "SEPacket.h"
+#import "SEDataManager.h"
+#import "SEMoPacket.h"
+
 #import "SRWebSocket.h"
 
 NSString *const kSEChangedSocketStatusNotification = @"SEChangedSocketStatusNotification";
@@ -25,7 +28,8 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 
 @interface SEDirector()<SRWebSocketDelegate>
 
-@property(nonatomic, retain) SRWebSocket *socket;
+@property (nonatomic, retain) SRWebSocket *socket;
+@property (nonatomic, retain) NSMutableArray *nonReceivedPackets;
 
 @end
 
@@ -54,11 +58,14 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
         [_dateFormatter setDateStyle:NSDateFormatterShortStyle];
         
         _packetsQueue = [NSOperationQueue new];
+        _packetsQueue.maxConcurrentOperationCount = 10;
+        
+        _nonReceivedPackets = [NSMutableArray new];
         _socket = [[SRWebSocket alloc] initWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"ws://echo.websocket.org:80"]]];
         _socket.delegate = self;
         
         [self addObserver:self forKeyPath:kSESocketStatePath options:NSKeyValueObservingOptionNew context:NULL];
-        [_socket open];
+//        [_socket open];
     }
     return self;
 }
@@ -87,65 +94,138 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 
 - (void)addMessage:(NSString *)message withValue:(BOOL)value date:(NSDate *)date inFormat:(SEPacketFormat)format;
 {
-//    for (NSUInteger i = 0; i < 20; i++)
-//    {
-//        date = [NSDate dateWithTimeInterval:i sinceDate:date];
-//        __block SEPacket *packet = [[SEPacket alloc] initWith:[NSString stringWithFormat:@"%i", i] withValue:value date:date];//message withValue:value date:date];
-    __block SEPacket *packet = [[SEPacket alloc] initWith:message withValue:value date:date];
-    packet.format = format;
+//    for (NSUInteger i = 0; i < 70; i++)
+    {
+//        NSDate *date1 = [NSDate dateWithTimeInterval:i sinceDate:date];
+//        __block SEPacket *packet = [[SEPacket alloc] initWith:[NSString stringWithFormat:@"%i", i] withValue:value date:date1];
+        __block SEPacket *packet = [[SEPacket alloc] initWith:message withValue:value date:date];
+        
+        SEMoPacket *moPacket = [[SEDataManager sharedManager] insertObject:[SEMoPacket class]];
+        [moPacket fillWithPacket:packet];
+        
+        packet.format = format;
         __block id archiveData = [self messageFromPacket:packet inFormat:format];
         
-        NSBlockOperation *operation = [NSBlockOperation new];
-        [operation addExecutionBlock:^(void)
-         {
-             if ([operation isCancelled]) { NSLog(@"Canceled ========= \n\n\n"); return;}
-             
-             [self.socket send:archiveData];
-             
-             [[NSNotificationCenter defaultCenter] postNotificationName:kSESocketSentMessageNotification object:self userInfo:
-              @{kSESocketMessageKey:archiveData, kSESocketPacketKey:packet}];
-             
-             if ([operation isCancelled]) { NSLog(@"Canceled ========= \n\n\n"); return; }
-         }];
-        
-        [[NSNotificationCenter defaultCenter] postNotificationName:kSEAddOperationToQueueNotification object:self userInfo:
-         @{kSESocketMessageKey:archiveData, kSESocketPacketKey:packet}];
-        [self.packetsQueue addOperation:operation];
-//    }
+        [self.nonReceivedPackets addObject:packet];
+        [self runOperationWithData:archiveData packet:packet];
+    }
+    [[SEDataManager sharedManager] saveContext];
 }
 
-- (id)messageFromPacket:(SEPacket *)packet inFormat:(SEPacketFormat)format
+- (void)reopen
 {
-    id archiveData;
-    if (format == 1 || format == 3)
+    [self removeObserver:self forKeyPath:kSESocketStatePath];
+    self.socket = nil;
+    
+    _socket = [[SRWebSocket alloc] initWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"ws://echo.websocket.org:80"]]];
+    _socket.delegate = self;
+    
+    [self addObserver:self forKeyPath:kSESocketStatePath options:NSKeyValueObservingOptionNew context:NULL];
+    [_socket open];
+}
+
++ (SEPacket *)findPacketLike:(SEPacket *)newPack inArray:(NSArray *)array
+{
+    __block NSInteger index = -1;
+    NSArray *dates = [array valueForKey:@"date"];
+    [dates enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        if ([newPack.date isEqualToDate:obj])
+        {
+            index = idx;
+            *stop = YES;
+        }
+    }];
+    
+    return (index >= 0)?array[index]:nil;
+}
+
+#pragma mark - KVO
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if ([keyPath isEqualToString:kSESocketStatePath])
     {
-        archiveData = [NSMutableData data];
-        NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initForWritingWithMutableData:archiveData];
-        
-        if (format == 1)
-        {
-            archiver.outputFormat = NSPropertyListXMLFormat_v1_0;
-        }
-        else
-        {
-            archiver.outputFormat = kCFPropertyListBinaryFormat_v1_0;
-        }
-        
-        [archiver encodeObject:packet forKey:@"123"];
-        [archiver finishEncoding];
+        dispatch_async(dispatch_get_main_queue(), ^{
+           self.socketStatus = self.socket.readyState; 
+        });
     }
-    else
+}
+
+#pragma mark - <SRWebSocketDelegate>
+
+- (void)webSocket:(SRWebSocket *)webSocket didReceiveMessage:(id)message
+{
+    SEPacket *packet = [self packetFromMessage:message];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kSESocketReceivedMessageNotification object:self userInfo:
+     @{kSESocketMessageKey:message, kSESocketPacketKey:packet}];
+    
+    SEPacket *old = [SEDirector findPacketLike:packet inArray:self.nonReceivedPackets];
+    if (old)
     {
-        NSError *writeError = nil;
-        
-        NSDictionary *dic = [packet dictionaryWithProperties];
-        if ([NSJSONSerialization isValidJSONObject:dic])
-        {
-            NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dic options:NSJSONWritingPrettyPrinted error:&writeError];
-            archiveData = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-        }
+        [self.nonReceivedPackets removeObject:old];
     }
-    return archiveData;
+}
+
+- (void)webSocketDidOpen:(SRWebSocket *)webSocket
+{
+    self.packetsQueue.suspended = NO;
+    
+    dispatch_async(dispatch_get_main_queue(), ^
+    {
+        if ([self.nonReceivedPackets count] > 0)
+        {
+            for (SEPacket *packet in self.nonReceivedPackets)
+            {
+                [self runOperationWithData:nil packet:packet];
+            }
+        }
+    });
+}
+
+- (void)webSocket:(SRWebSocket *)webSocket didFailWithError:(NSError *)error
+{
+}
+
+- (void)webSocket:(SRWebSocket *)webSocket didCloseWithCode:(NSInteger)code reason:(NSString *)reason wasClean:(BOOL)wasClean
+{
+    self.packetsQueue.suspended = YES;
+}
+
+- (void)webSocket:(SRWebSocket *)webSocket didReceivePong:(NSData *)pongPayload
+{
+    NSLog(@"Websocket received pong");
+}
+
+#pragma mark - Private
+
+- (void)runOperationWithData:(id)archiveData packet:(SEPacket *)packet
+{
+    BOOL needSendAddNotification = YES;
+    if (archiveData == nil && packet != nil)
+    {
+        archiveData = [self messageFromPacket:packet inFormat:packet.format];
+        needSendAddNotification = NO;
+    }
+    
+    NSBlockOperation *operation = [NSBlockOperation new];
+    [operation addExecutionBlock:^(void)
+     {
+         if ([operation isCancelled]) { NSLog(@"Canceled ========= \n\n\n"); return;}
+         
+         [self.socket send:archiveData];
+         
+         [[NSNotificationCenter defaultCenter] postNotificationName:kSESocketSentMessageNotification object:self userInfo:
+          @{kSESocketMessageKey:archiveData, kSESocketPacketKey:packet}];
+         
+         if ([operation isCancelled]) { NSLog(@"Canceled ========= \n\n\n"); return; }
+     }];
+    
+    if (needSendAddNotification)
+    {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kSEAddOperationToQueueNotification object:self userInfo:
+         @{kSESocketMessageKey:archiveData, kSESocketPacketKey:packet}];
+    }
+    [self.packetsQueue addOperation:operation];
 }
 
 - (SEPacket *)packetFromMessage:(id)message
@@ -194,6 +274,40 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
     }
 }
 
+- (id)messageFromPacket:(SEPacket *)packet inFormat:(SEPacketFormat)format
+{
+    id archiveData;
+    if (format == 1 || format == 3)
+    {
+        archiveData = [NSMutableData data];
+        NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initForWritingWithMutableData:archiveData];
+        
+        if (format == 1)
+        {
+            archiver.outputFormat = NSPropertyListXMLFormat_v1_0;
+        }
+        else
+        {
+            archiver.outputFormat = kCFPropertyListBinaryFormat_v1_0;
+        }
+        
+        [archiver encodeObject:packet forKey:@"123"];
+        [archiver finishEncoding];
+    }
+    else
+    {
+        NSError *writeError = nil;
+        
+        NSDictionary *dic = [packet dictionaryWithProperties];
+        if ([NSJSONSerialization isValidJSONObject:dic])
+        {
+            NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dic options:NSJSONWritingPrettyPrinted error:&writeError];
+            archiveData = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        }
+    }
+    return archiveData;
+}
+
 - (NSString *)stringFromPacket:(SEPacket *)packet
 {
     NSString *str;
@@ -202,60 +316,6 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
         str = [NSString stringWithFormat:@"%@ [%@]  \tvalue:%@ \"%@\"",[self.dateFormatter stringFromDate:packet.date], packetFormatToString(packet.format), [packet.value stringValue], packet.message];
     }
     return str;
-}
-
-- (void)reopen
-{
-    [self removeObserver:self forKeyPath:kSESocketStatePath];
-    self.socket = nil;
-    
-    _socket = [[SRWebSocket alloc] initWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"ws://echo.websocket.org:80"]]];
-    _socket.delegate = self;
-    
-    [self addObserver:self forKeyPath:kSESocketStatePath options:NSKeyValueObservingOptionNew context:NULL];
-    [_socket open];
-}
-
-#pragma mark - KVO
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
-    if ([keyPath isEqualToString:kSESocketStatePath])
-    {
-        dispatch_async(dispatch_get_main_queue(), ^{
-           self.socketStatus = self.socket.readyState; 
-        });
-    }
-}
-
-#pragma mark - <SRWebSocketDelegate>
-
-- (void)webSocket:(SRWebSocket *)webSocket didReceiveMessage:(id)message
-{
-    [[NSNotificationCenter defaultCenter] postNotificationName:kSESocketReceivedMessageNotification object:self userInfo:
-     @{kSESocketMessageKey:message, kSESocketPacketKey:[self packetFromMessage:message]}];
-}
-
-- (void)webSocketDidOpen:(SRWebSocket *)webSocket
-{
-    NSLog(@"Websocket Connected");
-    self.packetsQueue.suspended = NO;
-}
-
-- (void)webSocket:(SRWebSocket *)webSocket didFailWithError:(NSError *)error
-{
-    NSLog(@":( Websocket Failed With Error %@", error);
-}
-
-- (void)webSocket:(SRWebSocket *)webSocket didCloseWithCode:(NSInteger)code reason:(NSString *)reason wasClean:(BOOL)wasClean
-{
-    NSLog(@"WebSocket closed");
-    self.packetsQueue.suspended = YES;
-}
-
-- (void)webSocket:(SRWebSocket *)webSocket didReceivePong:(NSData *)pongPayload
-{
-    NSLog(@"Websocket received pong");
 }
 
 @end

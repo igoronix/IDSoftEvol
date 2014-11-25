@@ -7,11 +7,19 @@
 //
 
 #import "SEMoPacket.h"
+#import "SEPacket.h"
 
 @implementation SEMoPacket
 
 @dynamic date;
 @dynamic value;
 @dynamic message;
+
+- (void)fillWithPacket:(SEPacket *)packet
+{
+    self.date = packet.date;
+    self.message = packet.message;
+    self.value = packet.value;
+}
 
 @end

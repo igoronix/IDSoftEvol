@@ -67,14 +67,18 @@
 
 - (void)socketSentMessageNotification:(NSNotification *)notification
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_main_queue(), ^
+    {
         if (notification.userInfo != nil)
         {
             SEPacket *packet = [notification.userInfo valueForKey:kSESocketPacketKey];
             packet.tag = 1;
             
             NSUInteger i = [self.operations indexOfObject:packet];
+            
+//            [self.tableView beginUpdates];
             [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
+//            [self.tableView endUpdates];
         }
     });
 }
@@ -93,7 +97,9 @@
             [self performSelector:@selector(deletePacket:) withObject:oldPacket afterDelay:0.5];
         }
         
+//        [self.tableView beginUpdates];
         [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
+//        [self.tableView endUpdates];
     }
 }
 
@@ -101,22 +107,15 @@
 {
     NSUInteger i = [self.operations indexOfObject:packet];
     [self.operations removeObject:packet];
+    
+//    [self.tableView beginUpdates];
     [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
+//    [self.tableView endUpdates];
 }
 
 - (SEPacket *)findPacketLike:(SEPacket *)newPack
 {
-    __block NSInteger index = -1;
-    NSArray *dates = [self.operations valueForKey:@"date"];
-    [dates enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-        if ([newPack.date isEqualToDate:obj])
-        {
-            index = idx;
-            *stop = YES;
-        }
-    }];
-    
-    return (index >= 0)?self.operations[index]:nil;
+    return [SEDirector findPacketLike:newPack inArray:self.operations];
 }
 
 #pragma mark - TBV

@@ -39,10 +39,9 @@ typedef NS_ENUM (NSUInteger, SEPacketFormat)
 @property (nonatomic, retain) NSOperationQueue *packetsQueue;
 @property (nonatomic, retain) NSDateFormatter *dateFormatter;
 
-- (void)addMessage:(NSString *)message withValue:(BOOL)value date:(NSDate *)date inFormat:(SEPacketFormat)format;
-
-- (NSString *)stringFromPacket:(SEPacket *)packet;
-
 - (void)reopen;
+- (void)addMessage:(NSString *)message withValue:(BOOL)value date:(NSDate *)date inFormat:(SEPacketFormat)format;
+- (NSString *)stringFromPacket:(SEPacket *)packet;
++ (SEPacket *)findPacketLike:(SEPacket *)newPack inArray:(NSArray *)array;
 
 @end

@@ -9,11 +9,14 @@
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
 
+@class SEPacket;
 
 @interface SEMoPacket : NSManagedObject
 
 @property (nonatomic, retain) NSDate * date;
 @property (nonatomic, retain) NSNumber * value;
 @property (nonatomic, retain) NSString * message;
+
+- (void)fillWithPacket:(SEPacket *)packet;
 
 @end
