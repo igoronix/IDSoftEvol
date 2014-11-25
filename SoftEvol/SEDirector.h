@@ -13,7 +13,6 @@
 extern NSString *const kSEChangedSocketStatusNotification;
 extern NSString *const kSESocketSentMessageNotification;
 extern NSString *const kSESocketReceivedMessageNotification;
-
 extern NSString *const kSEAddOperationToQueueNotification;
 
 extern NSString *const kSESocketStatusKey;

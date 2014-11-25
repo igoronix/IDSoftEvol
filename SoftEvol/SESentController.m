@@ -47,7 +47,6 @@
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_operations release];
     
     [super dealloc];
 }
@@ -68,18 +67,14 @@
 
 - (void)socketSentMessageNotification:(NSNotification *)notification
 {
-    dispatch_async(dispatch_get_main_queue(), ^
+    dispatch_async(dispatch_get_main_queue(), ^(void)
     {
         if (notification.userInfo != nil)
         {
             SEPacket *packet = [notification.userInfo valueForKey:kSESocketPacketKey];
             packet.tag = 1;
-            
             NSUInteger i = [self.operations indexOfObject:packet];
-            
-//            [self.tableView beginUpdates];
             [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
-//            [self.tableView endUpdates];
         }
     });
 }
@@ -92,15 +87,13 @@
         SEPacket *oldPacket = [self findPacketLike:newPacket];
         
         NSUInteger i = [self.operations indexOfObject:oldPacket];
-        if (oldPacket)
+        if (oldPacket != nil)
         {
             oldPacket.tag = 2;
             [self performSelector:@selector(deletePacket:) withObject:oldPacket afterDelay:0.5];
         }
         
-//        [self.tableView beginUpdates];
         [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
-//        [self.tableView endUpdates];
     }
 }
 
@@ -109,9 +102,7 @@
     NSUInteger i = [self.operations indexOfObject:packet];
     [self.operations removeObject:packet];
     
-//    [self.tableView beginUpdates];
     [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
-//    [self.tableView endUpdates];
 }
 
 - (SEPacket *)findPacketLike:(SEPacket *)newPack

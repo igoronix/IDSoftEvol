@@ -61,11 +61,11 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
         _packetsQueue.maxConcurrentOperationCount = 10;
         
         _nonReceivedPackets = [NSMutableArray new];
+        
         _socket = [[SRWebSocket alloc] initWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"ws://echo.websocket.org:80"]]];
         _socket.delegate = self;
         
         [self addObserver:self forKeyPath:kSESocketStatePath options:NSKeyValueObservingOptionNew context:NULL];
-//        [_socket open];
     }
     return self;
 }
@@ -98,22 +98,17 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 
 - (void)addMessage:(NSString *)message withValue:(BOOL)value date:(NSDate *)date inFormat:(SEPacketFormat)format;
 {
-//    for (NSUInteger i = 0; i < 70; i++)
-    {
-//        NSDate *date1 = [NSDate dateWithTimeInterval:i sinceDate:date];
-//        __block SEPacket *packet = [[SEPacket alloc] initWith:[NSString stringWithFormat:@"%i", i] withValue:value date:date1];
-        __block SEPacket *packet = [[SEPacket alloc] initWith:message withValue:value date:date];
-        
-        SEMoPacket *moPacket = [[SEDataManager sharedManager] insertObject:[SEMoPacket class]];
-        [moPacket fillWithPacket:packet];
-        
-        packet.format = format;
-        __block id archiveData = [self messageFromPacket:packet inFormat:format];
-        
-        [self.nonReceivedPackets addObject:packet];
-        [self runOperationWithData:archiveData packet:packet];
-    }
+    __block SEPacket *packet = [[SEPacket alloc] initWith:message withValue:value date:date];
+    
+    SEMoPacket *moPacket = [[SEDataManager sharedManager] insertObject:[SEMoPacket class]];
+    [moPacket fillWithPacket:packet];
     [[SEDataManager sharedManager] saveContext];
+    
+    packet.format = format;
+    __block id archiveData = [self messageFromPacket:packet inFormat:format];
+    
+    [self.nonReceivedPackets addObject:packet];
+    [self runOperationWithData:archiveData packet:packet];
 }
 
 - (void)reopen

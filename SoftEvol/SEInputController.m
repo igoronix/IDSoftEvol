@@ -111,7 +111,7 @@
     [self.tvLog insertText:logString];
     [self.tvLog scrollToBottom];
     
-    NSString *str = (status == 1) ? @"Send":@"reConnect";
+    NSString *str = (status == 1) ? @"Send":@"Connect";
     [self.btSend setTitle:str forState:UIControlStateNormal];
 }
 

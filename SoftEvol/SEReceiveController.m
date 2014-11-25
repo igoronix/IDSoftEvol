@@ -22,7 +22,6 @@
     self = [super initWithCoder:coder];
     if (self != nil)
     {
-        
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(socketReceiveMessageNotification:) name:kSESocketReceivedMessageNotification object:[SEDirector sharedInstance]];
     }
     return self;
