@@ -12,8 +12,6 @@
 
 + (SEDataManager *)sharedManager;
 
-- (void)saveMessage:(NSString *)massage withValue:(BOOL)value date:(NSDate *)date;
-
 - (id)insertObject:(Class)class;
 - (id)allEntityForClass:(Class)class;
 - (void)saveContext;

@@ -8,12 +8,7 @@
 
 #import "SEInputController.h"
 #import "SEDirector.h"
-
 #import "UITextView+Scroll.h"
-
-@interface SEInputController()
-
-@end
 
 @implementation SEInputController
 

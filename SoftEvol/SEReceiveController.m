@@ -11,10 +11,6 @@
 #import "SEPacket.h"
 #import "UITextView+Scroll.h"
 
-@interface SEReceiveController ()
-
-@end
-
 @implementation SEReceiveController
 
 - (instancetype)initWithCoder:(NSCoder *)coder

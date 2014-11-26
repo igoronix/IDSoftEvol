@@ -15,7 +15,6 @@
 		78EE23401A19FC5100F1205F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 78EE233F1A19FC5100F1205F /* main.m */; };
 		78EE23431A19FC5100F1205F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 78EE23421A19FC5100F1205F /* AppDelegate.m */; };
 		78EE23461A19FC5100F1205F /* SoftEvol.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 78EE23441A19FC5100F1205F /* SoftEvol.xcdatamodeld */; };
-		78EE23491A19FC5100F1205F /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 78EE23481A19FC5100F1205F /* ViewController.m */; };
 		78EE234C1A19FC5100F1205F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 78EE234A1A19FC5100F1205F /* Main.storyboard */; };
 		78EE234E1A19FC5100F1205F /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 78EE234D1A19FC5100F1205F /* Images.xcassets */; };
 		78EE23511A19FC5100F1205F /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 78EE234F1A19FC5100F1205F /* LaunchScreen.xib */; };
@@ -54,8 +53,6 @@
 		78EE23411A19FC5100F1205F /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		78EE23421A19FC5100F1205F /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		78EE23451A19FC5100F1205F /* SoftEvol.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = SoftEvol.xcdatamodel; sourceTree = "<group>"; };
-		78EE23471A19FC5100F1205F /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		78EE23481A19FC5100F1205F /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		78EE234B1A19FC5100F1205F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		78EE234D1A19FC5100F1205F /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		78EE23501A19FC5100F1205F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
@@ -156,8 +153,6 @@
 				78EE23661A1A0B3000F1205F /* Sources */,
 				78EE23411A19FC5100F1205F /* AppDelegate.h */,
 				78EE23421A19FC5100F1205F /* AppDelegate.m */,
-				78EE23471A19FC5100F1205F /* ViewController.h */,
-				78EE23481A19FC5100F1205F /* ViewController.m */,
 				78EE234A1A19FC5100F1205F /* Main.storyboard */,
 				78EE234D1A19FC5100F1205F /* Images.xcassets */,
 				78EE234F1A19FC5100F1205F /* LaunchScreen.xib */,
@@ -328,7 +323,6 @@
 				78EE23431A19FC5100F1205F /* AppDelegate.m in Sources */,
 				789A702F1A1BA07400E21D94 /* SRWebSocket.m in Sources */,
 				7808C8411A1CD99900667471 /* SEDataManager.m in Sources */,
-				78EE23491A19FC5100F1205F /* ViewController.m in Sources */,
 				7808C8451A1CE21F00667471 /* SEPacket.m in Sources */,
 				78EE23401A19FC5100F1205F /* main.m in Sources */,
 				7808C83E1A1CD8B500667471 /* SEMoPacket.m in Sources */,

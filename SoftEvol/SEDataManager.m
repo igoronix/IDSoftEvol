@@ -34,15 +34,6 @@
     return sharedInstance;
 }
 
-- (instancetype)init
-{
-    self = [super init];
-    if (self != nil)
-    {
-    }
-    return self;
-}
-
 #pragma mark - Core Data stack
 
 - (NSURL *)applicationDocumentsDirectory {
@@ -88,7 +79,6 @@
     return _persistentStoreCoordinator;
 }
 
-
 - (NSManagedObjectContext *)managedObjectContext {
     // Returns the managed object context for the application (which is already bound to the persistent store coordinator for the application.)
     if (_managedObjectContext != nil) {
@@ -108,7 +98,6 @@
 
 - (id)insertObject:(Class)class
 {
-    NSLog(@"insert %@", class);
     return [NSEntityDescription insertNewObjectForEntityForName:NSStringFromClass(class) inManagedObjectContext:self.managedObjectContext];
 }
 
@@ -133,10 +122,6 @@
             abort();
         }
     }
-}
-
-- (void)saveMessage:(NSString *)massage withValue:(BOOL)value date:(NSDate *)date
-{
 }
 
 @end

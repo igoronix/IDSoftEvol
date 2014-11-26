@@ -60,7 +60,7 @@
         SEPacket *packet = [notification.userInfo valueForKey:kSESocketPacketKey];
         [self.operations addObject:packet];
         NSIndexPath* ipath = [NSIndexPath indexPathForRow: [self.operations indexOfObject:packet] inSection:0];
-        [self.tableView insertRowsAtIndexPaths:@[ipath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [self.tableView insertRowsAtIndexPaths:@[ipath] withRowAnimation:UITableViewRowAnimationFade];
         [self.tableView scrollToRowAtIndexPath:ipath atScrollPosition: UITableViewScrollPositionTop animated:YES];
     }
 }
@@ -90,19 +90,10 @@
         if (oldPacket != nil)
         {
             oldPacket.tag = 2;
-            [self performSelector:@selector(deletePacket:) withObject:oldPacket afterDelay:0.5];
         }
         
         [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
     }
-}
-
-- (void)deletePacket:(id)packet
-{
-    NSUInteger i = [self.operations indexOfObject:packet];
-    [self.operations removeObject:packet];
-    
-    [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
 }
 
 - (SEPacket *)findPacketLike:(SEPacket *)newPack
