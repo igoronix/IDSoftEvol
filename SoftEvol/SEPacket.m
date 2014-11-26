@@ -49,7 +49,7 @@
     self = [super init];
     if (self != nil)
     {
-        _message = dic[@"message"];
+        _message = [dic[@"message"] copy];
         _value = dic[@"value"];
         _date = [NSDate dateWithTimeIntervalSinceReferenceDate:[dic[@"date"] doubleValue]];
         _format = SEPacketFormat_JSON;
@@ -88,7 +88,6 @@
 - (void)dealloc
 {
     [_message release];
-    [_date release];
     [_value release];
     
     [super dealloc];

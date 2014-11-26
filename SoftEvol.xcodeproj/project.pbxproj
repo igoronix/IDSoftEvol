@@ -11,6 +11,7 @@
 		7808C8411A1CD99900667471 /* SEDataManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 7808C8401A1CD99900667471 /* SEDataManager.m */; };
 		7808C8451A1CE21F00667471 /* SEPacket.m in Sources */ = {isa = PBXBuildFile; fileRef = 7808C8441A1CE21F00667471 /* SEPacket.m */; };
 		7894F6861A1F3E020097B809 /* UITextView+Scroll.m in Sources */ = {isa = PBXBuildFile; fileRef = 7894F6851A1F3E020097B809 /* UITextView+Scroll.m */; };
+		7895A2F11A25EA6D005B2845 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 7895A2F01A25EA6D005B2845 /* Reachability.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		789A702F1A1BA07400E21D94 /* SRWebSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 789A702E1A1BA07400E21D94 /* SRWebSocket.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		78EE23401A19FC5100F1205F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 78EE233F1A19FC5100F1205F /* main.m */; };
 		78EE23431A19FC5100F1205F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 78EE23421A19FC5100F1205F /* AppDelegate.m */; };
@@ -45,6 +46,8 @@
 		7808C8441A1CE21F00667471 /* SEPacket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEPacket.m; sourceTree = "<group>"; };
 		7894F6841A1F3E020097B809 /* UITextView+Scroll.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UITextView+Scroll.h"; sourceTree = "<group>"; };
 		7894F6851A1F3E020097B809 /* UITextView+Scroll.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UITextView+Scroll.m"; sourceTree = "<group>"; };
+		7895A2EF1A25EA6D005B2845 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
+		7895A2F01A25EA6D005B2845 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
 		789A702D1A1BA07400E21D94 /* SRWebSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SRWebSocket.h; sourceTree = "<group>"; };
 		789A702E1A1BA07400E21D94 /* SRWebSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SRWebSocket.m; sourceTree = "<group>"; };
 		78EE233A1A19FC5100F1205F /* SoftEvol.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SoftEvol.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -111,9 +114,19 @@
 			name = Kit;
 			sourceTree = "<group>";
 		};
+		7895A2EE1A25EA63005B2845 /* Reach */ = {
+			isa = PBXGroup;
+			children = (
+				7895A2EF1A25EA6D005B2845 /* Reachability.h */,
+				7895A2F01A25EA6D005B2845 /* Reachability.m */,
+			);
+			name = Reach;
+			sourceTree = "<group>";
+		};
 		789A702B1A1BA07400E21D94 /* External */ = {
 			isa = PBXGroup;
 			children = (
+				7895A2EE1A25EA63005B2845 /* Reach */,
 				78EF7E161A1C9F26009301FD /* libicucore.dylib */,
 				789A702C1A1BA07400E21D94 /* Rocket */,
 			);
@@ -314,6 +327,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7895A2F11A25EA6D005B2845 /* Reachability.m in Sources */,
 				78EE23691A1A0B6000F1205F /* SEInputController.m in Sources */,
 				78EE236C1A1A0BB900F1205F /* SEReceiveController.m in Sources */,
 				78EE236F1A1A0C7C00F1205F /* SESentController.m in Sources */,

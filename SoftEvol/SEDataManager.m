@@ -10,9 +10,9 @@
 
 @interface SEDataManager()
 
-@property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
-@property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
-@property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
+@property (readonly, retain, nonatomic) NSManagedObjectContext *managedObjectContext;
+@property (readonly, retain, nonatomic) NSManagedObjectModel *managedObjectModel;
+@property (readonly, retain, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
 
 @end
 
@@ -34,15 +34,24 @@
     return sharedInstance;
 }
 
+- (void)dealloc
+{
+    [_managedObjectContext release];
+    [_managedObjectModel release];
+    [_persistentStoreCoordinator release];
+    
+    [super dealloc];
+}
+
 #pragma mark - Core Data stack
 
-- (NSURL *)applicationDocumentsDirectory {
-    // The directory the application uses to store the Core Data store file. This code uses a directory named "com.netcracker.SoftEvol" in the application's documents directory.
+- (NSURL *)applicationDocumentsDirectory
+{
     return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
 }
 
-- (NSManagedObjectModel *)managedObjectModel {
-    // The managed object model for the application. It is a fatal error for the application not to be able to find and load its model.
+- (NSManagedObjectModel *)managedObjectModel
+{
     if (_managedObjectModel != nil) {
         return _managedObjectModel;
     }
@@ -51,36 +60,31 @@
     return _managedObjectModel;
 }
 
-- (NSPersistentStoreCoordinator *)persistentStoreCoordinator {
-    // The persistent store coordinator for the application. This implementation creates and return a coordinator, having added the store for the application to it.
+- (NSPersistentStoreCoordinator *)persistentStoreCoordinator
+{
     if (_persistentStoreCoordinator != nil) {
         return _persistentStoreCoordinator;
     }
-    
-    // Create the coordinator and store
     
     _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
     NSURL *storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"SoftEvol.sqlite"];
     NSError *error = nil;
     NSString *failureReason = @"There was an error creating or loading the application's saved data.";
-    if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
-        // Report any error we got.
+    if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error])
+    {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
         dict[NSLocalizedDescriptionKey] = @"Failed to initialize the application's saved data";
         dict[NSLocalizedFailureReasonErrorKey] = failureReason;
         dict[NSUnderlyingErrorKey] = error;
         error = [NSError errorWithDomain:@"YOUR_ERROR_DOMAIN" code:9999 userInfo:dict];
-        // Replace this with code to handle the error appropriately.
-        // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
         abort();
     }
     
     return _persistentStoreCoordinator;
 }
 
-- (NSManagedObjectContext *)managedObjectContext {
-    // Returns the managed object context for the application (which is already bound to the persistent store coordinator for the application.)
+- (NSManagedObjectContext *)managedObjectContext
+{
     if (_managedObjectContext != nil) {
         return _managedObjectContext;
     }
@@ -104,20 +108,21 @@
 - (id)allEntityForClass:(Class)class
 {
     NSError *error = nil;
-    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+    NSFetchRequest *fetchRequest = [[NSFetchRequest new] autorelease];
     NSEntityDescription *entity = [NSEntityDescription entityForName:NSStringFromClass(class) inManagedObjectContext:self.managedObjectContext];
     [fetchRequest setEntity:entity];
     
     return [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
 }
 
-- (void)saveContext {
+- (void)saveContext
+{
     NSManagedObjectContext *managedObjectContext = self.managedObjectContext;
-    if (managedObjectContext != nil) {
+    if (managedObjectContext != nil)
+    {
         NSError *error = nil;
-        if ([managedObjectContext hasChanges] && ![managedObjectContext save:&error]) {
-            // Replace this implementation with code to handle the error appropriately.
-            // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+        if ([managedObjectContext hasChanges] && ![managedObjectContext save:&error])
+        {
             NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
             abort();
         }

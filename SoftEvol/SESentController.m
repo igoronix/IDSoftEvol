@@ -60,7 +60,8 @@
         SEPacket *packet = [notification.userInfo valueForKey:kSESocketPacketKey];
         [self.operations addObject:packet];
         NSIndexPath* ipath = [NSIndexPath indexPathForRow: [self.operations indexOfObject:packet] inSection:0];
-        [self.tableView insertRowsAtIndexPaths:@[ipath] withRowAnimation:UITableViewRowAnimationFade];
+        
+        [self.tableView reloadData];
         [self.tableView scrollToRowAtIndexPath:ipath atScrollPosition: UITableViewScrollPositionTop animated:YES];
     }
 }
@@ -117,7 +118,6 @@
     cell.textLabel.text = [[SEDirector sharedInstance] stringFromPacket:packet];
     
     UIColor *color;
-    
     switch (packet.tag)
     {
         case 0:
@@ -136,7 +136,6 @@
             break;
     }
     cell.backgroundColor = color;
-    [color release];
     
     return cell;
 }

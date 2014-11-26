@@ -11,6 +11,7 @@
 @interface SEInputController : UIViewController
 
 @property (nonatomic, assign) IBOutlet UILabel *lbStatus;
+@property (nonatomic, assign) IBOutlet UIActivityIndicatorView *aiIndicator;
 @property (nonatomic, assign) IBOutlet UITextView *tvLog;
 
 @property (nonatomic, assign) IBOutlet UITextField *tfMessage;

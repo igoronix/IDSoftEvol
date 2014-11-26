@@ -12,6 +12,7 @@
 #import "SEMoPacket.h"
 
 #import "SRWebSocket.h"
+#import "Reachability.h"
 
 NSString *const kSEChangedSocketStatusNotification = @"SEChangedSocketStatusNotification";
 NSString *const kSESocketSentMessageNotification = @"SESocketSentMessageNotification";
@@ -30,6 +31,9 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 
 @property (nonatomic, retain) SRWebSocket *socket;
 @property (nonatomic, retain) NSMutableArray *nonReceivedPackets;
+
+@property (nonatomic) BOOL reachable;
+@property (nonatomic, retain) Reachability *internetReachability;
 
 @end
 
@@ -66,6 +70,13 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
         _socket.delegate = self;
         
         [self addObserver:self forKeyPath:kSESocketStatePath options:NSKeyValueObservingOptionNew context:NULL];
+        self.socketStatus = 3;
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reachabilityChanged:) name:kReachabilityChangedNotification object:nil];
+        
+        _internetReachability = [Reachability reachabilityForInternetConnection];
+        [_internetReachability startNotifier];
+        [self updateInterface];
     }
     return self;
 }
@@ -74,6 +85,7 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 {
     [self removeObserver:self forKeyPath:kSESocketStatePath];
     
+    [_internetReachability release];
     [_nonReceivedPackets release];
     [_packetsQueue release];
     [_dateFormatter release];
@@ -94,18 +106,35 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
     }
 }
 
+- (void)setReachable:(BOOL)reachable
+{
+    if (_reachable != reachable)
+    {
+        _reachable = reachable;
+        
+        if (_reachable)
+        {
+            [self reopen];
+        }
+        else
+        {
+            self.packetsQueue.suspended = YES;
+        }
+    }
+}
+
 #pragma mark - Messaging
 
 - (void)addMessage:(NSString *)message withValue:(BOOL)value date:(NSDate *)date inFormat:(SEPacketFormat)format;
 {
-    __block SEPacket *packet = [[SEPacket alloc] initWith:message withValue:value date:date];
+    SEPacket *packet = [[[SEPacket alloc] initWith:message withValue:value date:date] autorelease];
     
     SEMoPacket *moPacket = [[SEDataManager sharedManager] insertObject:[SEMoPacket class]];
     [moPacket fillWithPacket:packet];
     [[SEDataManager sharedManager] saveContext];
     
     packet.format = format;
-    __block id archiveData = [self messageFromPacket:packet inFormat:format];
+    id archiveData = [self messageFromPacket:packet inFormat:format];
     
     [self.nonReceivedPackets addObject:packet];
     [self runOperationWithData:archiveData packet:packet];
@@ -113,8 +142,14 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 
 - (void)reopen
 {
+    self.socketStatus = 0;
+    
     [self removeObserver:self forKeyPath:kSESocketStatePath];
-    self.socket = nil;
+    if (self.socket.retainCount > 1)
+    {
+        [self.socket release];
+        self.socket = nil;
+    }
     
     _socket = [[SRWebSocket alloc] initWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"ws://echo.websocket.org:80"]]];
     _socket.delegate = self;
@@ -183,16 +218,30 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 
 - (void)webSocket:(SRWebSocket *)webSocket didFailWithError:(NSError *)error
 {
+    if (error.code == 57)
+    {
+        self.reachable = NO;
+    }
 }
 
 - (void)webSocket:(SRWebSocket *)webSocket didCloseWithCode:(NSInteger)code reason:(NSString *)reason wasClean:(BOOL)wasClean
 {
-    self.packetsQueue.suspended = YES;
+    self.reachable = NO;
 }
 
-- (void)webSocket:(SRWebSocket *)webSocket didReceivePong:(NSData *)pongPayload
+#pragma mark - Reach
+
+- (void)reachabilityChanged:(NSNotification *)notification
 {
-    NSLog(@"Websocket received pong");
+    Reachability* curReach = [notification object];
+    NSParameterAssert([curReach isKindOfClass:[Reachability class]]);
+    [self updateInterface];
+}
+
+- (void)updateInterface
+{
+    NetworkStatus netStatus = [self.internetReachability currentReachabilityStatus];
+    self.reachable = netStatus != 0;
 }
 
 #pragma mark - Private
@@ -225,6 +274,7 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
          @{kSESocketMessageKey:archiveData, kSESocketPacketKey:packet}];
     }
     [self.packetsQueue addOperation:operation];
+    [operation release];
 }
 
 - (SEPacket *)packetFromMessage:(id)message
@@ -242,7 +292,7 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
     if (error == nil && data != nil)
     {
         id object = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:&error];
-        SEPacket *packet = [[SEPacket alloc] initWithDic:object];
+        SEPacket *packet = [[[SEPacket alloc] initWithDic:object] autorelease];
         
         return packet;
     }
@@ -279,7 +329,7 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
     if (format == SEPacketFormat_XML || format == SEPacketFormat_Binary)
     {
         archiveData = [NSMutableData data];
-        NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initForWritingWithMutableData:archiveData];
+        NSKeyedArchiver *archiver = [[[NSKeyedArchiver alloc] initForWritingWithMutableData:archiveData] autorelease];
         
         if (format == 1)
         {
@@ -301,7 +351,7 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
         if ([NSJSONSerialization isValidJSONObject:dic])
         {
             NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dic options:NSJSONWritingPrettyPrinted error:&writeError];
-            archiveData = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+            archiveData = [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] autorelease];
         }
     }
     return archiveData;

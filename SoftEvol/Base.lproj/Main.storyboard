@@ -102,7 +102,7 @@
                                         <constraints>
                                             <constraint firstAttribute="height" constant="27" id="L2i-Pu-fUx"/>
                                         </constraints>
-                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="16"/>
                                         <state key="normal" title="Send">
                                             <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
@@ -152,7 +152,6 @@
                                 </constraints>
                                 <variation key="default">
                                     <mask key="constraints">
-                                        <exclude reference="nHj-eC-Gjf"/>
                                         <exclude reference="3i3-d2-aGA"/>
                                         <exclude reference="Big-HK-Ed2"/>
                                         <exclude reference="EVv-YC-IaW"/>
@@ -160,6 +159,7 @@
                                         <exclude reference="fDX-gq-XIc"/>
                                         <exclude reference="o1S-1g-aFA"/>
                                         <exclude reference="pUw-49-D48"/>
+                                        <exclude reference="nHj-eC-Gjf"/>
                                     </mask>
                                 </variation>
                             </view>
@@ -179,14 +179,23 @@
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textView>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" animating="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="sXm-cu-1Yy">
+                                <rect key="frame" x="274" y="10" width="20" height="20"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="20" id="2zN-ro-BCL"/>
+                                    <constraint firstAttribute="width" constant="20" id="gbj-sZ-aC0"/>
+                                </constraints>
+                            </activityIndicatorView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="1st-xK-GwM" firstAttribute="top" secondItem="hUc-sr-rpc" secondAttribute="bottom" id="32b-FG-RSh"/>
                             <constraint firstItem="3Q9-Ka-V88" firstAttribute="top" secondItem="1st-xK-GwM" secondAttribute="bottom" id="97u-9G-eQe"/>
                             <constraint firstItem="oVY-x7-ghx" firstAttribute="top" secondItem="Mcz-Jw-7ga" secondAttribute="bottom" id="L4u-1p-IYK"/>
+                            <constraint firstItem="oVY-x7-ghx" firstAttribute="trailing" secondItem="sXm-cu-1Yy" secondAttribute="trailing" constant="3" id="LXT-WE-fhJ"/>
                             <constraint firstItem="3Q9-Ka-V88" firstAttribute="top" secondItem="oVY-x7-ghx" secondAttribute="bottom" id="MT2-MP-2rW"/>
                             <constraint firstItem="Mcz-Jw-7ga" firstAttribute="leading" secondItem="PBG-Am-T8h" secondAttribute="leadingMargin" id="RoC-89-oz1"/>
+                            <constraint firstItem="Mcz-Jw-7ga" firstAttribute="centerY" secondItem="sXm-cu-1Yy" secondAttribute="centerY" id="Xfv-r5-ez0"/>
                             <constraint firstItem="oVY-x7-ghx" firstAttribute="width" secondItem="PBG-Am-T8h" secondAttribute="width" multiplier="0.5" constant="-3" id="ZKU-17-WJa"/>
                             <constraint firstItem="Mcz-Jw-7ga" firstAttribute="top" secondItem="hUc-sr-rpc" secondAttribute="bottom" id="ZTr-G5-6Mc"/>
                             <constraint firstItem="1st-xK-GwM" firstAttribute="width" secondItem="PBG-Am-T8h" secondAttribute="width" multiplier="0.5" constant="14" id="Zrm-Se-vlT"/>
@@ -203,6 +212,7 @@
                     </view>
                     <toolbarItems/>
                     <connections>
+                        <outlet property="aiIndicator" destination="sXm-cu-1Yy" id="gxD-nT-geZ"/>
                         <outlet property="btSend" destination="KRC-Kr-QYh" id="Bhu-ud-Yxx"/>
                         <outlet property="lbStatus" destination="Mcz-Jw-7ga" id="jJb-Pq-ctA"/>
                         <outlet property="scFormat" destination="B4X-9d-PMG" id="5nB-BM-rid"/>

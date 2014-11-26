@@ -63,7 +63,9 @@
     }
     else
     {
-        [[SEDirector sharedInstance] addMessage:self.tfMessage.text withValue:self.swBool.on date:[NSDate date] inFormat:self.scFormat.selectedSegmentIndex+1];
+        dispatch_async(dispatch_get_main_queue(), ^(void){
+            [[SEDirector sharedInstance] addMessage:self.tfMessage.text withValue:self.swBool.on date:[NSDate date] inFormat:self.scFormat.selectedSegmentIndex+1];
+        });
     }
 }
 
@@ -82,8 +84,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         id message = [notification.userInfo valueForKey:kSESocketMessageKey];
         NSString *logString = [NSString stringWithFormat:@"[%@]  SENT:\n%@\n", [[SEDirector sharedInstance].dateFormatter stringFromDate:[NSDate date]], message];
-        [self.tvLog insertText:logString];
-        [self.tvLog scrollToBottom];
+        [self insert:logString];
     });
 }
 
@@ -91,8 +92,7 @@
 {
     id message = [notification.userInfo valueForKey:kSESocketMessageKey];
     NSString *logString = [NSString stringWithFormat:@"[%@]  RECEIVED:\n%@\n", [[SEDirector sharedInstance].dateFormatter stringFromDate:[NSDate date]], message];
-    [self.tvLog insertText:logString];
-    [self.tvLog scrollToBottom];
+    [self insert:logString];
 }
 
 - (void)updateStatus
@@ -103,11 +103,16 @@
     self.lbStatus.textColor = (status == 1)?[UIColor greenColor]:[UIColor redColor];
     
     NSString *logString = [NSString stringWithFormat:@"[%@]  STATUS: %@\n", [[SEDirector sharedInstance].dateFormatter stringFromDate:[NSDate date]], socketStatusString(status)];
-    [self.tvLog insertText:logString];
-    [self.tvLog scrollToBottom];
+    [self insert:logString];
     
-    NSString *str = (status == 1) ? @"Send":@"Connect";
-    [self.btSend setTitle:str forState:UIControlStateNormal];
+    self.aiIndicator.hidden = (status == 1 || status == 3);
+    self.btSend.enabled = status == 1;
+}
+
+- (void)insert:(NSString *)str
+{
+    [self.tvLog insertText:str];
+    [self.tvLog scrollToBottom];
 }
 
 @end
