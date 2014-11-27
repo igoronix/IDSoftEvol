@@ -31,9 +31,11 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 
 @property (nonatomic, retain) SRWebSocket *socket;
 @property (nonatomic, retain) NSMutableArray *nonReceivedPackets;
+@property (nonatomic, retain) NSMutableArray *pings;
 
 @property (nonatomic) BOOL reachable;
 @property (nonatomic, retain) Reachability *internetReachability;
+@property (nonatomic, retain) NSTimer *pingTimer;
 
 @end
 
@@ -65,6 +67,7 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
         _packetsQueue.maxConcurrentOperationCount = 10;
         
         _nonReceivedPackets = [NSMutableArray new];
+        _pings = [NSMutableArray new];
         
         _socket = [[SRWebSocket alloc] initWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"ws://echo.websocket.org:80"]]];
         _socket.delegate = self;
@@ -74,15 +77,20 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reachabilityChanged:) name:kReachabilityChangedNotification object:nil];
         
-        _internetReachability = [Reachability reachabilityForInternetConnection];
+        _internetReachability = [Reachability reachabilityWithHostName:@"echo.websocket.org"];
         [_internetReachability startNotifier];
         [self updateInterface];
+        
+        _pingTimer = [NSTimer scheduledTimerWithTimeInterval:4 target:self selector:@selector(ping) userInfo:nil repeats:YES];
     }
     return self;
 }
 
 - (void)dealloc
 {
+    [_pingTimer invalidate];
+    [_pings release];
+    
     [self removeObserver:self forKeyPath:kSESocketStatePath];
     
     [_internetReachability release];
@@ -112,11 +120,16 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
     {
         _reachable = reachable;
         
-        if (_reachable)
+        if (_reachable && self.socket.readyState != 1)
         {
             [self reopen];
         }
-        else
+        if (_reachable && self.socket.readyState  == 1)
+        {
+            self.socketStatus = 1;
+            self.packetsQueue.suspended = NO;
+        }
+        else if (!_reachable)
         {
             self.packetsQueue.suspended = YES;
         }
@@ -124,6 +137,26 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
 }
 
 #pragma mark - Messaging
+
+- (void)ping
+{
+    if (self.socket.readyState == 1)
+    {
+        if ([self.pings count] > 8)
+        {
+            [self.pings removeAllObjects];
+            self.reachable = NO;
+            
+            self.socketStatus = 0;
+        }
+        
+        NSString *packet = @"pinPacket";
+        NSString *str = [NSString stringWithFormat:@"%p", packet];
+        [self.pings addObject:str];
+        [self.socket sendPing:[str dataUsingEncoding:NSUTF8StringEncoding]];
+        [packet release];
+    }
+}
 
 - (void)addMessage:(NSString *)message withValue:(BOOL)value date:(NSDate *)date inFormat:(SEPacketFormat)format;
 {
@@ -222,6 +255,20 @@ static NSString *const kSESocketStatePath = @"socket.readyState";
     {
         self.reachable = NO;
     }
+}
+
+- (void)webSocket:(SRWebSocket *)webSocket didReceivePong:(NSData *)pongPayload
+{
+    self.reachable = YES;
+    NSString *str = [[NSString alloc] initWithData:pongPayload encoding:NSUTF8StringEncoding];
+    
+    NSInteger i = -1;
+    i = [self.pings indexOfObject:str];
+    if (i >= 0 && i < [self.pings count])
+    {
+        [self.pings removeObjectAtIndex:i];
+    }
+    [str release];
 }
 
 - (void)webSocket:(SRWebSocket *)webSocket didCloseWithCode:(NSInteger)code reason:(NSString *)reason wasClean:(BOOL)wasClean
